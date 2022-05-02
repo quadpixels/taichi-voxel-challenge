@@ -7,7 +7,7 @@ from renderer import Renderer
 from math_utils import np_normalize, np_rotate_matrix
 
 VOXEL_DX = 1 / 64
-SCREEN_RES = (400, 240)
+SCREEN_RES = (800, 480)
 TARGET_FPS = 30
 UP_DIR = (0, 1, 0)
 HELP_MSG = '''
@@ -24,8 +24,8 @@ MAT_LIGHT = 2
 class Camera:
     def __init__(self, window, up):
         self._window = window
-        self._camera_pos = np.array((-0.76041974, 1.49772451, -0.91210929))
-        self._lookat_pos = np.array(( 0.70744669, 0.04141007, -0.5453445))
+        self._camera_pos = np.array((1.53240392, 1.64079145, -1.85480712))
+        self._lookat_pos = np.array((0.61388633, 0.14721716, -0.69914225))
         self._up = np_normalize(np.array(up))
         self._last_mouse_pos = None
 

@@ -6,7 +6,7 @@ from taichi.math import *
 scene = Scene(voxel_edges=0.01, exposure=1.4)
 scene.set_floor(-0.05, (1, 0.6, 0.4))
 scene.set_background_color((0, 0, 0))
-scene.set_directional_light((-1, 1, 0.3), 0.0, (1,1,1))
+scene.set_directional_light((1, 1, 0.3), 0.0, (1,1,1))
 
 @ti.func
 def sphere(o, r1, r2, c, ylim):
@@ -45,16 +45,17 @@ def initialize_voxels(): # MagicaVoxel：xyz；这里：x,z,-y
     sphere(vec3(40, 14, -27), 13, 0,  vec3(1, 0.8, 0.6), 14) # 汤
     line(vec3(36, 17, -48), vec3(56, 17, -17), vec3(0.8, 0.4, 0.4)) # 筷子
     line(vec3(38, 17, -48), vec3(59, 17, -19), vec3(0.8, 0.4, 0.4)) # 筷子
-    for x in range(-2, 0):  # 面条
+    for x in range(-4, 0):  # 面条
         line(vec3(40-x*3, 14, -40-x), vec3(29, 14, -35-x*2), vec3(1, 1, 0.9))
     for layer in range(0, 2):
-        for x in range(24-layer*14):
+        for x in range(44-layer*8):
             c = vec3(0, 0.8, 0)
-            if ti.randn() < 0.4 + layer*0.8: c = vec3(0.3, 0.1, 0)
-            theta = ti.randn() * 2 * 3.14159; r = ti.randn() * (8-layer*4);
+            if ti.randn() < 0.3: c = vec3(0.3, 0.1, 0)
+            theta = ti.randn() * 2 * 3.14159; r = ti.randn() * (14-layer*4);
             theta2 = ti.randn() * 2 * 3.14159;
-            p0 = vec3(40+r*ti.cos(theta), 14+layer, -27+r*ti.sin(theta))
-            line(p0, p0+vec3(2*ti.cos(theta2),0,2*ti.sin(theta2)), c)
+            p0 = vec3(40+r*ti.cos(theta), 14+layer, -20+r*ti.sin(theta))
+            if (p0 - vec3(40,14,-27)).norm() < 11:
+                line(p0, p0+vec3(2*ti.cos(theta2),0,2*ti.sin(theta2)), c)
     box(vec3(37, 10, -17), vec3(46, 17, -17), vec3(0.9, 0.9, 0.9), 2) # 勺子
     box(vec3(38, 10, -16), vec3(45, 16, -16), vec3(0.9, 0.9, 0.9), 2)
     line(vec3(37, 16, -17), vec3(21, 20, -32), vec3(0.9, 0.9, 0.9));
@@ -66,7 +67,7 @@ def initialize_voxels(): # MagicaVoxel：xyz；这里：x,z,-y
     box(vec3(39, 2, -60), vec3(39, 6, -50), vec3(0.15, 0.15, 0.15), 0) #
     box(vec3(40, 3, -59), vec3(49, 3, -51), vec3(1, 0.8, 0.6), 1) # 小菜里的汤
     box(vec3(44, 4, -58), vec3(47, 4, -54), vec3(1, 0.8, 0.4), 0) # 菜
-    box(vec3(44, 4, -53), vec3(47, 4, -50), vec3(1, 0.8, 0.4), 0) # 菜
+    box(vec3(45, 4, -53), vec3(48, 4, -50), vec3(0.4, 1, 0.6), 0) # 菜
     box(vec3(30, 3, -52), vec3(31, 4, -51), vec3(1, 0.4, 0), 0) # 花生米
     box(vec3(35, 3, -55), vec3(36, 4, -54), vec3(1, 0.4, 0), 0)
     box(vec3(32, 3, -53), vec3(34, 4, -52), vec3(1, 0.8, 0.2), 0)
