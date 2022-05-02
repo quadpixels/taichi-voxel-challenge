@@ -7,7 +7,7 @@ from renderer import Renderer
 from math_utils import np_normalize, np_rotate_matrix
 
 VOXEL_DX = 1 / 64
-SCREEN_RES = (1280, 720)
+SCREEN_RES = (400, 240)
 TARGET_FPS = 30
 UP_DIR = (0, 1, 0)
 HELP_MSG = '''
@@ -24,8 +24,8 @@ MAT_LIGHT = 2
 class Camera:
     def __init__(self, window, up):
         self._window = window
-        self._camera_pos = np.array((0.4, 0.5, 2.0))
-        self._lookat_pos = np.array((0.0, 0.0, 0.0))
+        self._camera_pos = np.array((-0.76041974, 1.49772451, -0.91210929))
+        self._lookat_pos = np.array(( 0.70744669, 0.04141007, -0.5453445))
         self._up = np_normalize(np.array(up))
         self._last_mouse_pos = None
 
@@ -110,7 +110,7 @@ class Camera:
 
 class Scene:
     def __init__(self, voxel_edges=0.06, exposure=3):
-        ti.init(arch=ti.vulkan)
+        ti.init(arch=ti.cpu)
         print(HELP_MSG)
         self.window = ti.ui.Window("Taichi Voxel Renderer",
                                    SCREEN_RES,
@@ -185,4 +185,7 @@ class Scene:
                 spp = max(spp, 1)
             else:
                 spp += 1
+            print(self.camera.position)
+            print(self.camera.look_at)
+            print(self.camera._up)
             self.window.show()
