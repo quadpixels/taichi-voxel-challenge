@@ -7,11 +7,23 @@
 # https://www.shadertoy.com/view/tltGW8
 
 import numpy as np
-
+from time import time
 import taichi as ti
+from scipy.spatial.transform import Rotation as R
 
 res = (640, 360)
 AlmostZero = 0.001
+
+@ti.func
+def LocalPointToGlobalPoint(o, p):
+  return o*p;
+  
+@ti.func
+def GlobalPointToLocalPoint(o, pos, p_g):
+  return o.transpose() @ (p_g - pos)
+
+cam_orientation = R.from_rotvec(rotvec=[0,0,0]).as_matrix()
+cam_pos = ti.Vector([0,0,0])
 
 ti.init(ti.cpu)
 pixels = ti.Vector.field(3, dtype=float, shape=res)
@@ -38,9 +50,11 @@ def Gradient(p):
 
 @ti.func
 def SceneSDF(p):
-  s = Sphere(p - ti.Vector([0, 10, 0]), 1)
-  s = Union(s, Sphere(p - ti.Vector([-2, 10, 0]), 1))
-  s = Union(s, Sphere(p - ti.Vector([2, 10, 0]), 1))
+  o = ti.Matrix([[1,0,0],[0,1,0],[0,0,1]])
+  s = Sphere(GlobalPointToLocalPoint(o, ti.Vector([0,10,0]), p), 1)
+  s = Subtract(s, Sphere(GlobalPointToLocalPoint(o, ti.Vector([-1, 9.5, 0]), p), 1))
+  s = Union(s, Sphere(GlobalPointToLocalPoint(o, ti.Vector([-2, 10, 0]), p), 1))
+  s = Union(s, Sphere(GlobalPointToLocalPoint(o, ti.Vector([2, 10, 0]), p), 1))
   return s
 
 @ti.func
@@ -56,33 +70,36 @@ def GetRayDir(xy, fovx):
   #return ti.Vector([ndc[0], 0, ndc[1]])
 
 @ti.func
-def raymarch(rd, travel_start, travel_end):
+def raymarch(rd, travel_start, travel_end, cam_pos):
   traveled = travel_start
   ret = ti.Vector([0.0, 0.0, 0.0, 0.0])
   hit = False
   for i in range(0, 100):
-    pos = rd * traveled
+    pos = rd * traveled + cam_pos
     dist = SceneSDF(pos)
     traveled += dist
     #traveled += 0.2
     hit = (dist < AlmostZero)
     if hit or traveled >= travel_end:
       if hit:
-        ret[1] = traveled
+        ret[1] = pos[0]
+        ret[2] = pos[1]
+        ret[3] = pos[2]
       break
   ret[0] = float(hit)
   return ret
 
 @ti.kernel
-def paint():
+def paint(cam_x: ti.f32, cam_y: ti.f32, cam_z: ti.f32):
+  cam_pos = [cam_x, cam_y, cam_z]
   light_dir = (ti.Vector([1,1,-1])*-1).normalized()
   for i, j in pixels:
     rd = GetRayDir(ti.Vector([i, j]), 45 * 3.14159 / 180)
     pixels[i, j] = [rd.x, 0, rd.z]
     if True:
-      ret = raymarch(rd, 0.1, 1000)
+      ret = raymarch(rd, 0.1, 1000, cam_pos)
       if ret[0] == 1:
-        p = rd * ret[1]
+        p = ret[1:4]
         #pixels[i, j] = ti.Vector([1,1,0])
         pixels[i, j] = ti.Vector([.5, .5, 0]) + \
                        ti.Vector([1,1,1]) * ti.pow(Gradient(p).dot(light_dir), 1)
@@ -90,8 +107,24 @@ def paint():
         pixels[i, j] = ti.Vector([0, 0, 0])
 
 if True:
+  last_millis = int(time() * 1000)
   gui = ti.GUI('UV', res)
   while not gui.get_event(ti.GUI.ESCAPE):
-    paint()
+    ms = int(time() * 1000)
+    delta_ms = ms - last_millis
+    last_millis = ms
+    if gui.is_pressed('w'):
+      cam_pos += ti.Vector(cam_orientation[1]) * delta_ms / 1000.0
+    if gui.is_pressed('s'):
+      cam_pos -= ti.Vector(cam_orientation[1]) * delta_ms / 1000.0
+    if gui.is_pressed('a'):
+      cam_pos -= ti.Vector(cam_orientation[0]) * delta_ms / 1000.0
+    if gui.is_pressed('d'):
+      cam_pos += ti.Vector(cam_orientation[0]) * delta_ms / 1000.0
+    if gui.is_pressed('q'):
+      cam_pos -= ti.Vector(cam_orientation[2]) * delta_ms / 1000.0
+    if gui.is_pressed('e'):
+      cam_pos += ti.Vector(cam_orientation[2]) * delta_ms / 1000.0
+    paint(cam_pos.x, cam_pos.y, cam_pos.z)
     gui.set_image(pixels)
     gui.show()
